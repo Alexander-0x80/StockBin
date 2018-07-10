@@ -1,0 +1,55 @@
+<div class="row">
+    <div class="col-12">
+        <h1>{{ name }}</h1>
+        <table id="stocks">
+          <tbody>
+            {% for symbol in stocks %}
+            <tr data-symbol='{{ symbol }}'>
+                <td colspan='4'><a href="/stock/{{symbol}}">{{ symbol }}</a></td>
+                <td align='right' nowrap> ??? </td>
+                <td align='right' nowrap> ??? (???) </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    #stocks {
+        table-layout: fixed;
+    }
+</style>
+
+<script type="text/javascript">
+    var batch_url = 'https://api.iextrading.com/1.0/stock/market/batch';
+    var filters = ['latestPrice', 'change', 'changePercent', 'marketCap'];
+    var stocks = [].slice.call(document.querySelectorAll('tr[data-symbol]'));
+
+    function update() {
+        var symbols = stocks.map(function (s) { return s.dataset.symbol; });
+
+        $http.get(
+            batch_url + '?types=quote&symbols=' + symbols.join(",") + '&filter=' + filters.join(","),
+            function success(req) {
+                var response = JSON.parse(req.responseText);
+                stocks.forEach(function updateStock(stock) {
+                    if (response.hasOwnProperty(stock.dataset.symbol)) {
+                        var color = response[stock.dataset.symbol].quote.changePercent > 0 ? 'green' : 'red';
+
+                        stock.children[1].innerText = $fmt.mcap(response[stock.dataset.symbol].quote.marketCap);
+                        stock.children[2].innerText = $fmt.quote(response[stock.dataset.symbol].quote.latestPrice) 
+                            + $fmt.percent(response[stock.dataset.symbol].quote.changePercent);
+                        stock.children[2].setAttribute('style', 'color:' + color);
+                    }
+                });
+            },
+            function error(req) {
+                console.log('ERR')
+            }
+        );
+    }
+
+    update();
+    setInterval(update, 5000);
+</script>

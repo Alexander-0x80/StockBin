@@ -1,0 +1,33 @@
+{
+  "name": "stocks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Alexander Ovchinnikov",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcrypt": "^2.0.1",
+    "body-parser": "^1.18.2",
+    "cheerio": "^1.0.0-rc.2",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.3",
+    "express-validator": "^5.1.2",
+    "morgan": "^1.9.0",
+    "mysql": "^2.15.0",
+    "nunjucks": "^3.1.2",
+    "passport": "^0.4.0",
+    "passport-openid": "^0.4.0",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2",
+    "shortid": "^2.2.8",
+    "winston": "^3.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-http": "^4.0.0",
+    "mocha": "^5.2.0"
+  }
+}

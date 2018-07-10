@@ -1,0 +1,120 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="input-group">
+            <input  id="searchInput" class="input-xl" type="text" placeholder="Enter stock symbol here">
+        </div>
+    </div>
+</div>
+
+<div id="advanced" class="row" style="display:none">
+    <div class="col-6">
+        <div class="input-field">
+            <label>Portfolio Name</label>
+            <input type="text" id="name" class="input-xl" value="{% if name %} {{ name }} {% else %} Untitled {% endif %}">
+            <p class="input-hint">(Optional)</p>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="input-field">
+            <label>Password Lock</label>
+            <input type="text" id="lock" class="input-xl">
+            <p class="input-hint">(Optional)</p>
+        </div>
+    </div>
+</div>
+
+{% block button %}
+{% include "partials/create/save-button.html" %}
+{% endblock %}
+
+<div class="row">
+    <div class="col-12">
+        <table id="stocks">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Description</th>
+                    <th><span class="icon-cog"></span></th>
+                </tr>
+            </thead>
+            {% if stocks %}
+                {% for symbol in stocks %}
+{% include "partials/create/list-item.html" %}
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<table id="itemTemplate" style="display:none">
+{% include "partials/create/list-item.html" %}
+</table>
+
+<script type="text/javascript" src="/js/ac.js"></script>
+<script type="text/javascript">
+    var table = $('#stocks');
+    var input = $('#searchInput');
+
+    var search = new autoComplete({
+        selector: '#searchInput',
+        minChars: 3,
+        source: function (term, response) {
+            $http.get("/search/" + term,
+                function success(req) {
+                    response(JSON.parse(req.responseText));
+                }
+            );
+        },
+        renderItem: function (item, search){
+            search = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            var re = new RegExp("(" + search.split(' ').join('|') + ")", "gi");
+            return '<div class="autocomplete-suggestion" data-description="'+ item[1] +'" data-symbol="' + item[0] + '">'
+                + '(' + item[0].replace(re, "<b>$1</b>") + ') '
+                + item[1].replace(re, "<b>$1</b>")
+            +'</div>';
+        },
+        onSelect: function(e, term, item){
+            return add(
+                item.getAttribute('data-symbol'),
+                item.getAttribute('data-description'));
+        }
+    });
+    
+    function add(symbol, description) {
+        var existing = $all('[data-item-symbol]').map(function (i) {
+            return i.getAttribute('data-item-symbol');
+        });
+ 
+        if (existing.indexOf(symbol.toUpperCase()) >= 0) {
+            return;
+        }
+
+        var itemTemplate = $('#itemTemplate');
+        var symbolTemplate = itemTemplate.querySelector('[data-template="symbol"]');
+        var descriptionTemplate = itemTemplate.querySelector('[data-template="description"]');
+        
+        itemTemplate.querySelector('[data-item-symbol]').setAttribute('data-item-symbol', symbol);
+        itemTemplate.querySelector('.icon-remove').setAttribute('onclick', 'remove("' + symbol + '")');
+        symbolTemplate.setAttribute('href', '/stock/' + symbol);
+        symbolTemplate.innerText = symbol;
+        descriptionTemplate.innerText = description;
+
+        return table.insertAdjacentHTML('beforeend', itemTemplate.innerHTML);
+    }
+
+    function remove(symbol) {
+        var row = $('[data-item-symbol="' + symbol + '"]');
+        row.parentNode.removeChild(row);
+    }
+</script>
+
+<style>
+    #stocks {
+        margin-top: 3rem;
+    }
+</style>
+{% endblock %}

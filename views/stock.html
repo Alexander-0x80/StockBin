@@ -1,0 +1,191 @@
+{% extends "index.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/chartist@0.11.0/dist/chartist.min.css">
+<script src="//cdn.jsdelivr.net/npm/chartist@0.11.0/dist/chartist.min.js"></script>
+
+<div id="info" class="row">
+    <div class="col-lg-4 col-sm-12">
+        <h1 data-model="symbol">????</h1>
+        <h4 data-model="companyName">*</h4>
+    </div>
+    <div class="col-lg-8 col-sm-12">
+        <h1 data-model="latestPrice">*</h1>
+        <div class="row">
+            <div class="col-2">
+                <h3 class="color" data-model="change">*</h3>
+            </div>
+            <div class="col-2">
+                <h3 class="color" data-model="changePercent" data-format="percent">*</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-4 col-sm-12">
+        <h2>Summary</h2>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Volume</td>
+                    <td data-model="latestVolume" data-format="dec">???</td>
+                </tr>
+                <tr>
+                    <td>Average Volume</td>
+                    <td data-model="avgTotalVolume" data-format="dec">???</td>
+                </tr>
+                <tr>
+                    <td>Previous close</td>
+                    <td data-model="previousClose" data-format="quote">???</td>
+                </tr>
+                <tr>
+                    <td>52 Week High</td>
+                    <td data-model="week52High" data-format="quote">???</td>
+                </tr>
+                <tr>
+                    <td>52 Week Low</td>
+                    <td data-model="week52Low" data-format="quote">???</td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
+    <div class="col-lg-8 col-sm-12">
+        <h2>Chart</h2><input type="radio">1m</input>
+        <div id="chart"></div>
+    </div>
+</div>
+
+<style>
+    #info {
+        margin-bottom: 2rem;
+    }
+
+    [data-model="symbol"] {
+        font-size: 6rem;
+        text-transform: uppercase;
+        margin-top: 3rem;
+    }
+
+    [data-model="latestPrice"] {
+        font-size: 6rem;
+        margin-top: 3rem;
+    }
+
+    td[data-model] {
+        font-weight: bold;
+        text-align: right;
+    }
+</style>
+
+<script type="text/javascript">
+    var models = $all('[data-model]');
+    var colored = $all('.color');
+    var nodata = "---";
+
+    function chart(data) {
+        new Chartist.Line('#chart', data, {
+            height: 250,
+            fullWidth: true,
+            showPoint: false,
+            /*axisX: {
+                labelInterpolationFnc: function(value, index) {
+                    return index % 10 === 0 ? value : null;
+                }
+            },*/
+            lineSmooth: Chartist.Interpolation.cardinal({
+                fillHoles: true,
+            })
+        });
+    }
+
+    function empty() {
+        return models.forEach(function (i) {
+            i.innerText = nodata;
+        });
+    }
+
+    function color() {
+        colored.forEach(function (i) {
+            return i.setAttribute('style', 'color:' +
+                (i.innerText.indexOf("-") >= 0 ? 'red' : 'green'));
+        });
+        
+    }
+
+    function updateChart() {
+        $http.get('https://api.iextrading.com/1.0/stock/{{ symbol }}/chart/1m',
+            function success (req) { 
+                if (req.status == 200) {
+                    var response = JSON.parse(req.responseText);
+                    return chart({
+                        labels: response.map(function (i) { return i.label; }),
+                        series: [
+                            response.map(function (i) { return i.close; })
+                        ]
+                    });
+                }
+            });
+    }
+
+    function updateQuote() {
+        $http.get('https://api.iextrading.com/1.0/stock/{{ symbol }}/quote',
+            function success (req) {
+                if (req.status == 200) {
+                    var response = JSON.parse(req.responseText);
+                    models.forEach(function (i) {
+                        var model = response[i.getAttribute('data-model')];
+                        var format = i.getAttribute('data-format');
+
+                        if (model) return i.innerText = (format)
+                            ? $fmt[format](model)
+                            : model;
+
+                        return i.innerText = nodata;
+                    });
+
+                    color();
+                }
+            });
+    }
+
+    function update() {
+        var endpoint = batch_url + '?types=quote,chart&symbols={{ symbol }}&range=1d&chartInterval=2&filter=close,minute,symbol,companyName'
+            +  models.map(function (i) { return i.getAttribute("data-model")}).join(",");
+
+        $http.get(endpoint,
+            function success (req) {
+                if (req.status === 200) {
+                    var response = JSON.parse(req.responseText);
+                    if (response.hasOwnProperty('{{ symbol }}')) {
+                        models.forEach(function (i) {
+
+                            var model = response['{{ symbol }}'].quote[i.getAttribute("data-model")];
+                            var format = i.getAttribute("data-format");
+
+                            if (model) return i.innerText = (format)
+                                ? $fmt[format](model)
+                                : model;
+
+                            return i.innerText == nodata; 
+                        });
+
+                        color();
+                        return chart({
+                            labels: response['{{ symbol }}'].chart.map(function (i) { return i.minute; }),
+                            series: [
+                                response['{{ symbol }}'].chart.map(function (i) { return i.close; })
+                            ]
+                        });
+                    }
+                }
+
+                return empty();
+            }, empty);
+    }
+    
+    //update();
+    updateChart();
+    setInterval(updateQuote, 1000);
+</script>
+{% endblock %}

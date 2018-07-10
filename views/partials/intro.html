@@ -1,0 +1,23 @@
+<div class="row">
+    <div class="col-12 text-center mar-t-lg">
+        <h3>Instantly <span id="random">create</span> minimal stock portfolios like <a href="/SkMqMXE1m">this</a>.</h3>
+    </div>
+    <div class="col-12 text-center">
+        <a class="button button-xl mar-t-md" href="/create">Create</a>
+    </div>
+</div>
+
+<script>
+//(function () {
+    var random = $('#random');
+    var values = ['fork', 'share', 'create'];
+    var rotate = function (array) { 
+        var _ = array.shift();
+        array.push(_);
+        return _;
+    };
+    setInterval(function () {
+        random.innerHTML = rotate(values);
+    }, 5000);
+//})();
+</script>

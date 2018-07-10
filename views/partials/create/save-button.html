@@ -1,0 +1,60 @@
+<div class="row">
+    <div class="col-4">
+        <span class="switch switch-xl">
+            <input type="checkbox" id="toggle">
+            <label for="toggle">Advanced {{ fork }}</label>
+        </span>
+    </div>
+    <div class="col-4">
+        <button id="saveButton" class="button-block button-xl">Save</button>
+    </div>
+    <div class="col-4"></div>
+</div>
+
+<script type="text/javascript">
+(function () {
+    var toggle = $('#toggle');
+    var saveButton = $('#saveButton');
+    var advanced = $('#advanced');
+
+    toggle.addEventListener('click', toggleAdvanced);
+    saveButton.addEventListener('click', save);
+
+    function toggleAdvanced() {
+        return toggle.checked
+            ? advanced.style.display = ""
+            : advanced.style.display = "none";
+    }
+
+    function save() {
+        saveButton.classList.add('button-loader');
+        var portfolioName = $('#name').value;
+        var portfolioLock = $('#lock').value;
+        var symbols = $all('[data-item-symbol]')
+            .slice(0, -1)   // Last one is the template
+            .map(function (i) {
+                return i.getAttribute('data-item-symbol');
+            });
+
+        {% if portfolio and not fork %}
+        var endpoint = '/edit/{{ portfolio }}';
+        {% else %}
+        var endpoint = '/create';
+        {% endif %}
+
+        $http.post(endpoint, { 
+            symbols: symbols,
+            name: portfolioName,
+            lock: portfolioLock
+        }, function success(request) {
+            var response;
+            if (request.status === 201) {
+                response = JSON.parse(request.responseText);
+                if (response.created) {
+                    window.location.replace('/' + response.created);
+                }
+            } 
+        });
+    }
+})();
+</script>

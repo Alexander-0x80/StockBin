@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block content %}
+    {% include "partials/portfolio/stocks.html" %}
+    <div class="row">
+        <div class='col'>
+            <a href="/fork/{{ portfolio }}"><strong>Fork</strong></a>
+            <a href="/edit/{{ portfolio }}"><strong>Edit</strong></a>
+        </div>
+        <div class='col'>
+        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="fyzlmn">Tweet</a>
+        <script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+        <a name="fb_share" type="button_count" href="http://www.facebook.com/sharer.php">Share</a>
+<script src="http://static.ak.fbcdn.net/connect.php/js/FB.Share" type="text/javascript"></script>
+        </div>
+    </div>
+{% endblock %}
